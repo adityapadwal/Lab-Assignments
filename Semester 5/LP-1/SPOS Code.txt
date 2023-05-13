@@ -1,0 +1,2506 @@
+1)	Macro Pass-1
+
+----------------------------------------arglist.java-----------------------------------------------------------------
+package macroPass1;
+public class arglist {
+String argname;
+arglist(String argument) {
+// TODO Auto-generated constructor stub
+this.argname=argument;
+}
+}
+
+---------------------------------------mdt.java---------------------------------------------------------
+package macroPass1;
+public class mdt {
+String stmnt;
+public mdt() {
+// TODO Auto-generated constructor stub
+stmnt="";
+}
+}
+
+--------------------------------------mnt.java--------------------------------------------------
+package macroPass1;
+public class mnt {
+String name;
+int addr;
+int arg_cnt;
+mnt(String nm, int address)
+{
+this.name=nm;
+this.addr=address;
+this.arg_cnt=0;
+}
+}
+
+-----------------------------------macroPass1.java----------------------------------------------
+package macroPass1;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+public class macroPass1 {
+public static void main(String[] args) throws IOException {
+// TODO Auto-generated method stub
+BufferedReader br1=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\macroPass1\\src\\input.txt"));
+String line;
+mdt[] MDT=new mdt[20];
+mnt[] MNT=new mnt[4];
+arglist[] ARGLIST = new arglist[10]; 
+boolean macro_start=false,macro_end=false,fill_arglist=false;
+int mdt_cnt=0,mnt_cnt=0,arglist_cnt=0;
+while((line = br1.readLine())!=null)
+{
+line=line.replaceAll(",", " ");
+String[] tokens=line.split("\\s+");
+MDT[mdt_cnt] = new mdt();
+String stmnt = "";
+for(int i=0;i<tokens.length;i++)
+{
+if(tokens[i].equalsIgnoreCase("mend"))
+{
+MDT[mdt_cnt++].stmnt = "\t"+tokens[i];
+macro_end = true;
+}
+if(tokens[i].equalsIgnoreCase("macro"))
+{
+macro_start = true;
+macro_end = false;
+}
+else if(!macro_end)
+{
+if(macro_start)
+{
+MNT[mnt_cnt++]=new mnt(tokens[i],mdt_cnt);
+macro_start=false;
+fill_arglist=true;
+}
+if(fill_arglist)
+{
+while(i<tokens.length)
+{
+MDT[mdt_cnt].stmnt = MDT[mdt_cnt].stmnt+ "\t" + tokens[i];
+stmnt = stmnt +"\t"+ tokens[i];
+if(tokens[i].matches("&[a-zA-Z]+")||tokens[i].matches("&[a-zA-Z]+[0-9]+"))
+ARGLIST[arglist_cnt++]=new arglist(tokens[i]);
+i++;
+}
+fill_arglist=false;
+}
+else
+{
+if(tokens[i].matches("[a-zA-Z]+") || tokens[i].matches("[a-zA-Z]+[0-9]+")||tokens[i].matches("[0-9]+"))
+{
+MDT[mdt_cnt].stmnt = MDT[mdt_cnt].stmnt+ "\t" + tokens[i];
+stmnt = stmnt +"\t"+ tokens[i];
+}
+if(tokens[i].matches("&[a-zA-Z]+") || tokens[i].matches("&[a-zA-Z]+[0-9]+"))
+{
+for(int j=0;j<arglist_cnt;j++)
+if(tokens[i].equals(ARGLIST[j].argname))
+{
+MDT[mdt_cnt].stmnt = MDT[mdt_cnt].stmnt + "\t#"+(j+1);
+stmnt = stmnt +"\t#"+(j+1);
+}
+}
+}
+}
+}
+if(stmnt!="" && !macro_end)
+mdt_cnt++;
+}
+br1.close();
+BufferedWriter bw1=new BufferedWriter(new FileWriter("C:\\Users\\Admin\\eclipse-workspace\\macroPass1\\src\\mnt.txt"));
+System.out.println("\n\t********MACRO NAME TABLE**********");
+System.out.println("\n\tINDEX\tNAME\tADDRESS");
+for(int i=0;i<mnt_cnt;i++)
+{
+System.out.println("\t"+i+"\t"+MNT[i].name+"\t"+MNT[i].addr);
+bw1.write(MNT[i].name+"\t"+MNT[i].addr+"\n");
+}
+bw1.close();
+bw1=new BufferedWriter(new FileWriter("C:\\Users\\Admin\\eclipse-workspace\\macroPass1\\src\\arglist.txt"));
+System.out.println("\n\n\t********ARGUMENT LIST**********");
+System.out.println("\n\tINDEX\tNAME\tADDRESS");
+for(int i=0;i<arglist_cnt;i++)
+{
+System.out.println("\t"+i+"\t"+ARGLIST[i].argname);
+bw1.write(ARGLIST[i].argname+"\n");
+}
+bw1.close();
+System.out.println("\n\t********MACRO DEFINITION TABLE**********");
+System.out.println("\n\tINDEX\t\tSTATEMENT");
+bw1=new BufferedWriter(new FileWriter("C:\\Users\\Admin\\eclipse-workspace\\macroPass1\\src\\mdt.txt"));
+for(int i=0;i<mdt_cnt;i++)
+{
+System.out.println("\t"+i+"\t"+MDT[i].stmnt);
+bw1.write(MDT[i].stmnt+"\n");
+}
+bw1.close();
+}
+}
+
+---------------------------------------------input.txt-------------------------------------------------
+MACRO
+INCR &X,&Y,&REG1 = AREG
+MOVER &REG1,&X
+ADD &REG1,&Y
+MOVEM &REG1,&X
+MEND
+MACRO
+DECR &A,&B,&REG2 = BREG
+MOVER &REG2,&A
+SUB &REG2,&B
+MOVEM &REG2,&A
+MEND
+START 100
+READ N1
+READ N2
+DECR N1,N2
+INCR N1,N2
+STOP
+N1 DS 1
+N2 DS 2
+END
+--------------------------------------------------------------------------------------------------------
+                                                      Output
+
+----------------------------------------------------arglist.txt----------------------------------------------
+
+&X
+&Y
+&REG1
+&A
+&B
+&REG2
+
+-----------------------------------------------------mdt.txt--------------------------------------------------------
+
+	INCR	&X	&Y	&REG1	=	AREG
+	MOVER	#3	#1
+	ADD	#3	#2
+	MOVEM	#3	#1
+	MEND
+	DECR	&A	&B	&REG2	=	BREG
+	MOVER	#6	#4
+	SUB	#6	#5
+	MOVEM	#6	#4
+	MEND
+
+-----------------------------------------------------mnt.txt-------------------------------------------------------------
+
+INCR	0
+DECR	5
+
+
+
+2)	Macro Pass-2
+
+----------------------------------------arglist.java-----------------------------------------------------------------
+package macroPass2;
+
+public class arglist 
+{
+	String argname,value;
+	arglist(String argument) 
+	{
+		// TODO Auto-generated constructor stub
+		this.argname=argument;
+		this.value="";
+	}
+}
+
+---------------------------------------mdt.java---------------------------------------------------------
+package macroPass2;
+
+public class mdt 
+{
+	String stmnt;
+	public mdt() 
+	{
+		// TODO Auto-generated constructor stub
+		stmnt="";
+	}
+}
+
+--------------------------------------mnt.java--------------------------------------------------
+package macroPass2;
+
+public class mnt 
+{
+	String name;
+	int addr;
+	int arg_cnt;
+	mnt(String nm, int address, int total_arg)
+	{
+		this.name=nm;
+		this.addr=address;
+		this.arg_cnt=total_arg;
+	}
+}
+
+
+----------------------------------------arglist.txt-----------------------------------------------------------------
+&X
+&Y
+&REG1 AREG
+&A
+&B
+&REG2 BREG
+
+
+---------------------------------------mdt.txt---------------------------------------------------------
+INCR &X &Y &REG1 = AREG
+MOVER #3 #1
+ADD #3 #2
+MOVEM #3 #1
+MEND
+DECR &A &B &REG2 = BREG
+MOVER #6 #4
+SUB #6 #5
+MOVEM #6 #4
+MEND
+
+---------------------------------------mnt.txt---------------------------------------------------------
+INCR 0	3
+DECR 5	3
+
+---------------------------------------input.txt---------------------------------------------------------
+MACRO
+INCR &X,&Y,&REG1
+MOVER &REG1,&X
+ADD &REG1,&Y
+MOVEM &REG1,&X
+MEND
+MACRO
+DECR &A,&B,&REG2
+MOVER &REG2,&A
+SUB &REG2,&B
+MOVEM &REG2,&A
+MEND
+START 100
+READ N1
+READ N2
+INCR N1,N2
+DECR N1,N3
+STOP
+N1 DS 1
+N2 DS 2
+N3 DS 1
+END
+
+------------------------------------output.txt----------------------------------------------
+
+
+
+	START	100
+	READ	N1
+	READ	N2
+
+MOVER	AREG	N1	
+ADD	AREG	N2	
+MOVEM	AREG	N1	
+
+MOVER	BREG	N1	
+SUB	BREG	N3	
+MOVEM	BREG	N1	
+	STOP
+	N1	DS	1
+	N2	DS	2
+	N3	DS	1
+	END
+
+
+
+-----------------------------------macroPass2.java----------------------------------------------
+package macroPass2;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+public class macroPass2 
+{
+	public static void main(String[] args) throws IOException 
+	{
+		mdt[] MDT=new mdt[20];
+		mnt[] MNT=new mnt[4];
+		arglist[] formal_parameter=new arglist[10];
+		int macro_addr = -1;
+		boolean macro_start=false,macro_end=false;
+		int macro_call = -1;
+		int mdt_cnt=0,mnt_cnt=0,formal_arglist_cnt=0,actual_arglist_cnt=0,temp_cnt=0,temp_cnt1=0;
+		
+		BufferedReader br1=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\macroPass2\\src\\mnt.txt"));
+		String line;
+		while((line = br1.readLine())!=null)
+		{
+			String[] parts=line.split("\\s+");
+			MNT[mnt_cnt++]=new mnt(parts[0], Integer.parseInt(parts[1]),Integer.parseInt(parts[2]));
+		}
+		br1.close();
+		System.out.println("\n\t********MACRO NAME TABLE**********");
+		System.out.println("\n\tINDEX\tNAME\tADDRESS\tTOTAL ARGUMENTS");
+		for(int i=0;i<mnt_cnt;i++)
+			System.out.println("\t"+i+"\t"+MNT[i].name+"\t"+MNT[i].addr+"\t\t"+MNT[i].arg_cnt);
+			br1=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\macroPass2\\src\\arglist.txt"));
+		while((line = br1.readLine())!=null)
+		{
+			String[] parameters=line.split("\\s+");
+			formal_parameter[formal_arglist_cnt++]=new arglist(parameters[0]);
+			if(parameters.length>1)
+				formal_parameter[formal_arglist_cnt-1].value = parameters[1];
+		}
+		br1.close();
+		System.out.println("\n\n\t********FORMAL ARGUMENT LIST**********");
+		System.out.println("\n\tINDEX\tNAME\tADDRESS");
+		for(int i=0;i<formal_arglist_cnt;i++)
+			System.out.println("\t"+i+"\t"+formal_parameter[i].argname+"\t"+formal_parameter[i].value);
+			br1=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\macroPass2\\src\\mdt.txt"));
+		while((line = br1.readLine())!=null)
+		{
+			MDT[mdt_cnt]=new mdt();
+			MDT[mdt_cnt++].stmnt=line;
+		}
+		br1.close();
+		System.out.println("\n\t********MACRO DEFINITION TABLE**********");
+		System.out.println("\n\tINDEX\t\tSTATEMENT");
+		for(int i=0;i<mdt_cnt;i++)
+			System.out.println("\t"+i+"\t"+MDT[i].stmnt);
+			br1=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\macroPass2\\src\\input.txt"));
+			arglist[] actual_parameter=new arglist[10];
+			BufferedWriter bw1 = new BufferedWriter(new FileWriter("C:\\Users\\Admin\\eclipse-workspace\\macroPass2\\src\\output.txt"));
+		while((line = br1.readLine())!=null)
+		{
+			line=line.replaceAll(",", " ");
+			String[] tokens=line.split("\\s+");
+			temp_cnt1=0;
+			for(String current_token:tokens)
+			{
+				if(current_token.equalsIgnoreCase("macro"))
+				{
+					macro_start=true;
+					macro_end=false;
+				}
+				if(macro_end && !macro_start)
+				{
+					if(macro_call != -1 && temp_cnt<formal_arglist_cnt-1)
+					{
+						if(formal_parameter[actual_arglist_cnt].value != "")
+						{
+							actual_parameter[actual_arglist_cnt++]=new arglist(formal_parameter[actual_arglist_cnt-1].value);
+						}
+						actual_parameter[actual_arglist_cnt++]=new arglist(current_token);
+						if(formal_parameter[actual_arglist_cnt].value != "")
+						{
+							actual_parameter[actual_arglist_cnt++]=new arglist(formal_parameter[actual_arglist_cnt-1].value);
+						}
+					}
+					for(int i=0;i<mnt_cnt;i++)
+					{
+						if(current_token.equals(MNT[i].name))
+						{
+							macro_call=i;
+							temp_cnt1 = temp_cnt1 +MNT[i].arg_cnt;
+							break;
+						}
+						temp_cnt1 = temp_cnt1 + MNT[i].arg_cnt;
+					}
+					if(macro_call == -1)
+						bw1.write("\t" + current_token);
+				}
+				if(current_token.equalsIgnoreCase("mend"))
+				{
+					macro_end=true;
+					macro_start=false;
+				}
+			}
+			if(macro_call != -1)
+			{
+				macro_addr=MNT[macro_call].addr+1;
+				while(true)
+				{
+					if(MDT[macro_addr].stmnt.contains("mend") || MDT[macro_addr].stmnt.contains("MEND"))
+					{
+						macro_call = -1;
+						break;
+					}
+					else
+					{
+						bw1.write("\n");
+						String[] temp_tokens=MDT[macro_addr++].stmnt.split("\\s+");
+						for(String temp:temp_tokens)
+						{
+							if(temp.matches("#[0-9]+"))
+							{
+								int num = Integer.parseInt(temp.replaceAll("[^0-9]+", ""));
+								bw1.write(actual_parameter[num-1].argname+"\t");
+							}
+							else
+								bw1.write(temp + "\t");
+						}
+					}
+				}
+			}
+			if(!macro_start )
+				bw1.write("\n");
+				macro_call= -1;
+		}
+		br1.close();
+		bw1.close();
+		
+		System.out.println("\n\n\t********ACTUAL ARGUMENT LIST**********");
+		System.out.println("\n\tINDEX\tNAME\tADDRESS");
+		for(int i=0;i<actual_arglist_cnt;i++)
+			System.out.println("\t"+i+"\t"+actual_parameter[i].argname);
+	}
+}
+
+
+
+
+4)	Write a program to solve Classical Problems of Synchronization using Mutex and Semaphore 
+
+package SPOSpkg;
+
+import java.util.concurrent.Semaphore;
+class mutexSemaphore {
+ static Semaphore readLock = new Semaphore(1);
+ static Semaphore writeLock = new Semaphore(1);
+ static int readCount = 0;
+ static class Read implements Runnable {
+ @Override
+ public void run() {
+ try {
+ //Acquire Section
+ readLock.acquire();
+ readCount++;
+ if (readCount == 1) {
+ writeLock.acquire();
+ }
+ readLock.release();
+ //Reading section
+ System.out.println("Thread "+Thread.currentThread().getName() + " is READING");
+ Thread.sleep(1500);
+ System.out.println("Thread "+Thread.currentThread().getName() + " has FINISHED READING");
+ //Releasing section
+ readLock.acquire();
+ readCount--;
+ if(readCount == 0) {
+ writeLock.release();
+ }
+ readLock.release();
+ } catch (InterruptedException e) {
+ System.out.println(e.getMessage());
+ }
+ }
+ }
+ static class Write implements Runnable {
+ @Override
+ public void run() {
+ try {
+ writeLock.acquire();
+ System.out.println("Thread "+Thread.currentThread().getName() + " is WRITING");
+ Thread.sleep(2500);
+ System.out.println("Thread "+Thread.currentThread().getName() + " has finished WRITING");
+ writeLock.release();
+ } catch (InterruptedException e) {
+ System.out.println(e.getMessage());
+ }
+ }
+ }
+ public static void main(String[] args) throws Exception {
+ Read read = new Read();
+ Write write = new Write();
+ Thread t1 = new Thread(read);
+ t1.setName("thread1");
+ Thread t2 = new Thread(read);
+ t2.setName("thread2");
+ Thread t3 = new Thread(write);
+ t3.setName("thread3");
+ Thread t4 = new Thread(read);
+ t4.setName("thread4");
+ t1.start();
+ t3.start();
+ t2.start();
+ t4.start();
+ }
+}
+
+
+6)	Simulation of election algorithms (Ring and Bully). 
+
+
+package SPOSpkg;
+
+import java.util.*;
+class Process
+{
+    int id;
+    boolean active;
+    
+    Process(int id)
+    {
+        this.id=id;
+        active=true;
+    }
+}
+public class RingBully
+{
+    //class variables
+    static int no;
+    static Process p[];
+    public static int getMax()
+    {
+        int max=-99;
+        int max_index=0;
+        for(int i=0;i<p.length;i++)
+        {
+            if(p[i].active&&p[i].id>max)
+            {
+                max=p[i].id;
+                max_index=i;
+            }
+        }
+        return max_index;
+    }
+    public static void main(String args[])
+    {
+        Scanner sc= new Scanner(System.in);
+        System.out.println("Enter your Choice");
+        System.out.println("1) Ring");      
+        System.out.println("2) Bully"); 
+        System.out.println("3) Exit"); 
+        int choice = sc.nextInt();
+        System.out.println("Enter the number of processes");
+        no=sc.nextInt();
+        p=new Process[no];
+        for(int i=0;i<p.length;i++)
+        {
+            p[i]=new Process(i);
+        }
+        
+        System.out.println("Process with Process ID "+p[getMax()].id+" Fails");
+        p[getMax()].active=false;
+        
+        System.out.print("Enter the process id who will initiate the election :");
+        int initiator = sc.nextInt();
+        int c;
+        switch(choice)
+        {
+            case 1:
+                    int prev=initiator;
+                    int next=prev+1;
+                    
+                    while(true)
+                    {
+                        if(p[next].active)
+                        {
+                            System.out.println("P"+p[prev].id+" Passes Msg 'Election("+p[prev].id+")' to P"+p[next].id);
+                            prev=next;
+                        }
+                        next=(next+1)%no;
+                        if(next==initiator)
+                        {
+                            break;
+                        }
+                    }
+                    System.out.println("Process with Process ID "+p[getMax()].id+" becomes the coordinator");
+                    // c stands for coordinator
+                    c=p[getMax()].id;
+                    prev=c;
+                    next=(prev+1)%no;
+                    while(true)
+                    {
+                        if(p[next].active)
+                        {
+                            System.out.println("P"+p[prev].id+" Passes Msg 'Coordinator("+c+")' to P"+p[next].id);
+                            prev=next;
+                        }
+                        next=(next+1)%no;
+                        if(next==c)
+                        {
+                            break;
+                        }
+                    }
+                break;
+            case 2:
+                    while(true)
+                    {
+                        boolean is_high=false;
+                        for(int i=initiator+1;i<no;i++)
+                        {
+                            if(p[i].active)
+                            {
+                                System.out.println("P"+initiator+" Passes Msg 'Election("+initiator+")' to P"+i);
+                                is_high=true;
+                            }               
+                        }
+                        
+                        if(is_high)
+                        {
+                            for(int i=initiator+1;i<no;i++)
+                            {
+                                if(p[i].active)
+                                {
+                                    System.out.println("Process"+i+" Passes Msg 'OKay("+i+")' to P"+initiator);
+                                    is_high=true;
+                                }               
+                            }
+                            initiator++;
+                        }
+                        else
+                        {
+                            c=p[getMax()].id;  
+                            System.out.println("Process with Process ID "+p[getMax()].id+" becomes the coordinator");
+                            for(int i=c-1;i>=0;i--)
+                            {
+                                if(p[i].active)
+                                {
+                                    System.out.println("P"+c+" Passes Msg 'Coordinator("+c+")' to P"+i);
+                                }               
+                            }
+                            break;
+                        }
+                    }
+                break;
+            case 3:
+                System.exit(0);
+                break;
+        }
+    }
+    
+}
+
+
+7)	"Write a program to simulate CPU Scheduling Algorithms: FCFS, SJF (Preemptive)
+	Process    AT                 BT
+	P1             10                  2
+	P2             0                    10
+	P3             8                    4
+	P4             5                    5
+	"
+
+
+FCFS(NonPremp):
+
+
+package SPOSpkg;
+
+import java.util.*;
+public class FCFS_NonPremp 
+{
+	public static void main(String args[])
+	{
+		Scanner sc=new Scanner(System.in);
+		System.out.println("Enter no. of process: ");
+		int n=sc.nextInt();
+		int pid[]=new int[n];
+		int at[]=new int[n];
+		int bt[]=new int[n];
+		int ct[]=new int[n];
+		int tat[]=new int[n];
+		int wt[]=new int[n];
+		int temp;
+		float avg_wt=0,avg_tat=0;
+ 
+		for(int i=0; i<n; i++)
+		{
+			System.out.println("Enter arrival time of process " +(i+1)+ ":");
+			at[i]=sc.nextInt();
+			System.out.println("Enter burst time of process " +(i+1)+ ":");
+			bt[i]=sc.nextInt();
+			pid[i]=i+1;
+		}
+ 
+		for(int i=0 ; i<n; i++)
+		{
+			for(int j=0;  j< n-(i+1) ; j++)
+			{
+				if(at[j] > at[j+1] )
+				{
+					temp = at[j];
+					at[j] = at[j+1];
+					at[j+1] = temp;
+					temp = bt[j];
+					bt[j] = bt[j+1];
+					bt[j+1] = temp;
+					temp = pid[j];
+					pid[j] = pid[j+1];
+					pid[j+1] = temp;
+				}
+			}
+		}
+		
+		for(int i=0 ; i<n; i++)
+		{
+			if( i == 0)
+			{	
+				ct[i]= at[i]+bt[i];
+			}
+			else
+			{
+				if( at[i]>ct[i-1])
+				{
+					ct[i]= at[i] +bt[i];
+				}
+				else
+					ct[i]= ct[i-1] +bt[i];
+			}
+			tat[i] = ct[i] - at[i] ;
+			wt[i] = tat[i] - bt[i] ;
+			avg_wt += wt[i] ;
+			avg_tat += tat[i] ;
+		}
+		
+		System.out.println("Pid\tAT\tBT\tCT\tTAT\tWT\n");
+		for(int i=0 ; i<n; i++)
+		{
+			System.out.println(pid[i] + "  \t " + at[i] + "\t" + bt[i] + "\t" + ct[i] + "\t" + tat[i] + "\t"  + wt[i] ) ;
+		}
+		System.out.println("\nAverage TAT (turn around time) :"+(avg_tat/n));
+		System.out.println("\nAverage WT (waiting time) : "+ (avg_wt/n));
+		
+		sc.close();
+	}
+	
+}
+
+
+SJF(Premp):
+
+
+package SPOSpkg;
+import java.util.*;
+
+public class SJF_Preemp {
+	
+    public static void main (String args[])
+	{
+	Scanner sc=new Scanner(System.in);
+	System.out.println ("enter no of process:");
+	int n= sc.nextInt();
+	int pid[] = new int[n]; // it takes pid of process
+	int at[] = new int[n]; // at means arrival time
+	int bt[] = new int[n]; // bt means burst time
+	int ct[] = new int[n]; // ct means complete time
+	int ta[] = new int[n];// ta means turn around time
+	int wt[] = new int[n];  // wt means waiting time
+	int f[] = new int[n];  // f means it is flag it checks process is completed or not
+	int k[]= new int[n];   // it is also stores brust time
+	    int i, st=0, tot=0;
+	    float avgwt=0, avgta=0;
+
+	    for (i=0;i<n;i++)
+	    {
+	     pid[i]= i+1;
+	     System.out.println ("enter process " +(i+1)+ " arrival time:");
+	     at[i]= sc.nextInt();
+	     System.out.println("enter process " +(i+1)+ " burst time:");
+	     bt[i]= sc.nextInt();
+	     k[i]= bt[i];
+	     f[i]= 0;
+	    }
+
+	    while(true){
+	     int min=99,c=n;
+	     if (tot==n)
+	     break;
+
+	     for ( i=0;i<n;i++)
+	     {
+	     if ((at[i]<=st) && (f[i]==0) && (bt[i]<min))
+	     {
+	     min=bt[i];
+	     c=i;
+	     }
+	     }
+
+	     if (c==n)
+	     st++;
+	     else
+	     {
+	     bt[c]--;
+	     st++;
+	     if (bt[c]==0)
+	     {
+	     ct[c]= st;
+	     f[c]=1;
+	     tot++;
+	     }
+	     }
+	    }
+
+	    for(i=0;i<n;i++)
+	    {
+	     ta[i] = ct[i] - at[i];
+	     wt[i] = ta[i] - k[i];
+	     avgwt+= wt[i];
+	     avgta+= ta[i];
+	    }
+
+	    System.out.println("pid  arrival  burst  complete turn waiting");
+	    for(i=0;i<n;i++)
+	    {
+	     System.out.println(pid[i] +"\t"+ at[i]+"\t"+ k[i] +"\t"+ ct[i]+"\t"+ ta[i] +"\t"+ wt[i]);
+	    }
+
+	    System.out.println("\naverage tat is "+ (float)(avgta/n));
+	    System.out.println("average wt is "+ (float)(avgwt/n));
+	    sc.close();
+	}
+	}
+
+
+8)	"Write a program to simulate CPU Scheduling Algorithms: FCFS, Priority (Non-Preemptive). 
+	Process        AT                   BT
+	P1             10                   2
+	P2             0                    10
+	P3             8                    4
+	P4             5                    5
+	"
+
+FCFS(NonPremp):
+
+
+package SPOSpkg;
+
+import java.util.*;
+public class FCFS_NonPremp 
+{
+	public static void main(String args[])
+	{
+		Scanner sc=new Scanner(System.in);
+		System.out.println("Enter no. of process: ");
+		int n=sc.nextInt();
+		int pid[]=new int[n];
+		int at[]=new int[n];
+		int bt[]=new int[n];
+		int ct[]=new int[n];
+		int tat[]=new int[n];
+		int wt[]=new int[n];
+		int temp;
+		float avg_wt=0,avg_tat=0;
+ 
+		for(int i=0; i<n; i++)
+		{
+			System.out.println("Enter arrival time of process " +(i+1)+ ":");
+			at[i]=sc.nextInt();
+			System.out.println("Enter burst time of process " +(i+1)+ ":");
+			bt[i]=sc.nextInt();
+			pid[i]=i+1;
+		}
+ 
+		for(int i=0 ; i<n; i++)
+		{
+			for(int j=0;  j< n-(i+1) ; j++)
+			{
+				if(at[j] > at[j+1] )
+				{
+					temp = at[j];
+					at[j] = at[j+1];
+					at[j+1] = temp;
+					temp = bt[j];
+					bt[j] = bt[j+1];
+					bt[j+1] = temp;
+					temp = pid[j];
+					pid[j] = pid[j+1];
+					pid[j+1] = temp;
+				}
+			}
+		}
+		
+		for(int i=0 ; i<n; i++)
+		{
+			if( i == 0)
+			{	
+				ct[i]= at[i]+bt[i];
+			}
+			else
+			{
+				if( at[i]>ct[i-1])
+				{
+					ct[i]= at[i] +bt[i];
+				}
+				else
+					ct[i]= ct[i-1] +bt[i];
+			}
+			tat[i] = ct[i] - at[i] ;
+			wt[i] = tat[i] - bt[i] ;
+			avg_wt += wt[i] ;
+			avg_tat += tat[i] ;
+		}
+		
+		System.out.println("Pid\tAT\tBT\tCT\tTAT\tWT\n");
+		for(int i=0 ; i<n; i++)
+		{
+			System.out.println(pid[i] + "  \t " + at[i] + "\t" + bt[i] + "\t" + ct[i] + "\t" + tat[i] + "\t"  + wt[i] ) ;
+		}
+		System.out.println("\nAverage TAT (turn around time) :"+(avg_tat/n));
+		System.out.println("\nAverage WT (waiting time) : "+ (avg_wt/n));
+		
+		sc.close();
+	}
+	
+}
+
+
+Priority (Non-Preemptive):
+
+
+
+package SPOSpkg;
+
+import java.util.Scanner;
+
+public class Priority_NonPreemp
+{
+
+    int burstTime[];
+    int priority[];
+    int arrivalTime[];
+    String[] processId;
+    int numberOfProcess;
+
+    void getProcessData(Scanner input)
+    {
+        System.out.print("Enter the number of Process for Scheduling: ");
+        int inputNumberOfProcess = input.nextInt();
+        numberOfProcess = inputNumberOfProcess;
+        burstTime = new int[numberOfProcess];
+        priority = new int[numberOfProcess];
+        arrivalTime = new int[numberOfProcess];
+        processId = new String[numberOfProcess];
+        String st = "P";
+        for (int i = 0; i < numberOfProcess; i++)
+        {
+            processId[i] = st.concat(Integer.toString(i));
+            System.out.print("Enter the burst time   for Process - " +
+(i) + " : ");
+            burstTime[i] = input.nextInt();
+            System.out.print("Enter the arrival time for Process - " +
+(i) + " : ");
+            arrivalTime[i] = input.nextInt();
+            System.out.print("Enter the priority     for Process - " +
+(i) + " : ");
+            priority[i] = input.nextInt();
+        }
+    }
+
+    void sortAccordingArrivalTimeAndPriority(int[] at, int[] bt, int[]
+prt, String[] pid)
+    {
+
+        int temp;
+        String stemp;
+        for (int i = 0; i < numberOfProcess; i++)
+        {
+
+            for (int j = 0; j < numberOfProcess - i - 1; j++)
+            {
+                if (at[j] > at[j + 1])
+                {
+                    //swapping arrival time
+                    temp = at[j];
+                    at[j] = at[j + 1];
+                    at[j + 1] = temp;
+
+                    //swapping burst time
+                    temp = bt[j];
+                    bt[j] = bt[j + 1];
+                    bt[j + 1] = temp;
+
+                    //swapping priority
+                    temp = prt[j];
+                    prt[j] = prt[j + 1];
+                    prt[j + 1] = temp;
+
+                    //swapping process identity
+                    stemp = pid[j];
+                    pid[j] = pid[j + 1];
+                    pid[j + 1] = stemp;
+
+                }
+                //sorting according to priority when arrival timings are same
+                if (at[j] == at[j + 1])
+                {
+                    if (prt[j] > prt[j + 1])
+                    {
+                        //swapping arrival time
+                        temp = at[j];
+                        at[j] = at[j + 1];
+                        at[j + 1] = temp;
+
+                        //swapping burst time
+                        temp = bt[j];
+                        bt[j] = bt[j + 1];
+                        bt[j + 1] = temp;
+
+                        //swapping priority
+                        temp = prt[j];
+                        prt[j] = prt[j + 1];
+                        prt[j + 1] = temp;
+
+                        //swapping process identity
+                        stemp = pid[j];
+                        pid[j] = pid[j + 1];
+                        pid[j + 1] = stemp;
+
+                    }
+                }
+            }
+
+        }
+    }
+
+    void priorityNonPreemptiveAlgorithm()
+    {
+        int finishTime[] = new int[numberOfProcess];
+        int bt[] = burstTime.clone();
+        int at[] = arrivalTime.clone();
+        int prt[] = priority.clone();
+        String pid[] = processId.clone();
+        int waitingTime[] = new int[numberOfProcess];
+        int turnAroundTime[] = new int[numberOfProcess];
+
+        sortAccordingArrivalTimeAndPriority(at, bt, prt, pid);
+
+        //calculating waiting & turn-around time for each process
+        finishTime[0] = at[0] + bt[0];
+        turnAroundTime[0] = finishTime[0] - at[0];
+        waitingTime[0] = turnAroundTime[0] - bt[0];
+
+        for (int i = 1; i < numberOfProcess; i++)
+        {
+            finishTime[i] = bt[i] + finishTime[i - 1];
+            turnAroundTime[i] = finishTime[i] - at[i];
+            waitingTime[i] = turnAroundTime[i] - bt[i];
+        }
+        float sum = 0;
+        for (int n : waitingTime)
+        {
+            sum += n;
+        }
+        float averageWaitingTime = sum / numberOfProcess;
+
+        sum = 0;
+        for (int n : turnAroundTime)
+        {
+            sum += n;
+        }
+        float averageTurnAroundTime = sum / numberOfProcess;
+
+        //print on console the order of processes along with their finish time & turn around time
+        System.out.println("Priority Scheduling Algorithm : ");
+        System.out.format("%20s%20s%20s%20s%20s%20s%20s\n",
+"ProcessId", "BurstTime", "ArrivalTime", "Priority", "FinishTime",
+"WaitingTime", "TurnAroundTime");
+        for (int i = 0; i < numberOfProcess; i++) {
+            System.out.format("%20s%20d%20d%20d%20d%20d%20d\n",
+pid[i], bt[i], at[i], prt[i], finishTime[i], waitingTime[i],
+turnAroundTime[i]);
+        }
+
+        System.out.format("%100s%20f%20f\n", "Average",
+averageWaitingTime, averageTurnAroundTime);
+    }
+
+    public static void main(String[] args)
+    {
+        Scanner input = new Scanner(System.in);
+        Priority_NonPreemp obj = new
+        Priority_NonPreemp();
+        obj.getProcessData(input);
+        obj.priorityNonPreemptiveAlgorithm();
+    }
+}
+
+
+
+9)	"Write a program to simulate CPU Scheduling Algorithms: FCFS and Round Robin.
+	Process    AT                 BT
+	P1             10                  2
+	P2             0                    10
+	P3             8                    4
+	P4             5                    5
+	"
+
+
+FCFS(NonPremp):
+
+
+package SPOSpkg;
+
+import java.util.*;
+public class FCFS_NonPremp 
+{
+	public static void main(String args[])
+	{
+		Scanner sc=new Scanner(System.in);
+		System.out.println("Enter no. of process: ");
+		int n=sc.nextInt();
+		int pid[]=new int[n];
+		int at[]=new int[n];
+		int bt[]=new int[n];
+		int ct[]=new int[n];
+		int tat[]=new int[n];
+		int wt[]=new int[n];
+		int temp;
+		float avg_wt=0,avg_tat=0;
+ 
+		for(int i=0; i<n; i++)
+		{
+			System.out.println("Enter arrival time of process " +(i+1)+ ":");
+			at[i]=sc.nextInt();
+			System.out.println("Enter burst time of process " +(i+1)+ ":");
+			bt[i]=sc.nextInt();
+			pid[i]=i+1;
+		}
+ 
+		for(int i=0 ; i<n; i++)
+		{
+			for(int j=0;  j< n-(i+1) ; j++)
+			{
+				if(at[j] > at[j+1] )
+				{
+					temp = at[j];
+					at[j] = at[j+1];
+					at[j+1] = temp;
+					temp = bt[j];
+					bt[j] = bt[j+1];
+					bt[j+1] = temp;
+					temp = pid[j];
+					pid[j] = pid[j+1];
+					pid[j+1] = temp;
+				}
+			}
+		}
+		
+		for(int i=0 ; i<n; i++)
+		{
+			if( i == 0)
+			{	
+				ct[i]= at[i]+bt[i];
+			}
+			else
+			{
+				if( at[i]>ct[i-1])
+				{
+					ct[i]= at[i] +bt[i];
+				}
+				else
+					ct[i]= ct[i-1] +bt[i];
+			}
+			tat[i] = ct[i] - at[i] ;
+			wt[i] = tat[i] - bt[i] ;
+			avg_wt += wt[i] ;
+			avg_tat += tat[i] ;
+		}
+		
+		System.out.println("Pid\tAT\tBT\tCT\tTAT\tWT\n");
+		for(int i=0 ; i<n; i++)
+		{
+			System.out.println(pid[i] + "  \t " + at[i] + "\t" + bt[i] + "\t" + ct[i] + "\t" + tat[i] + "\t"  + wt[i] ) ;
+		}
+		System.out.println("\nAverage TAT (turn around time) :"+(avg_tat/n));
+		System.out.println("\nAverage WT (waiting time) : "+ (avg_wt/n));
+		
+		sc.close();
+	}
+	
+}
+
+
+
+Round Robin(Premp):
+
+
+
+
+10)	Write a program to simulate Memory placement strategies – best fit, first fit.
+
+
+Best Fit:
+
+
+package SPOSpkg;
+import java.util.*;
+
+public class BestFit {
+	// Method to allocate memory to
+	// blocks as per Best fit algorithm
+	public static void BestFit(int blockSize[], int m,
+	int processSize[], int n)
+	{
+	// Stores block id of the
+	// block allocated to a process
+	int allocation[] = new int[n];
+
+	// Initially no block is assigned to any process
+	for (int i = 0; i < allocation.length; i++)
+	allocation[i] = -1;
+
+	// pick each process and find suitable blocks
+	// according to its size ad assign to it
+	for (int i = 0; i < n; i++)
+	{ 	int diff=1000;
+	int pos=-1;
+	for (int j = 0; j < m; j++)
+	{
+	if (blockSize[j] >= processSize[i])
+	{
+	int calDiff= blockSize[j]- processSize[i];
+
+	if(calDiff < diff) {
+	diff= calDiff;
+	pos=j;
+	}
+	}
+	}
+	// allocate block j to p[i] process
+	allocation[i] = pos;
+
+	// Reduce available memory in this block.
+	//blockSize[pos] -= processSize[i];
+	if(pos!=-1) {
+	blockSize[pos] = 0;}
+	}
+
+	System.out.println("Process No. Process Size	Block no.");
+	for (int i = 0; i < n; i++)
+	{
+	System.out.print(" " + (i+1) + " 		" +
+	processSize[i] + " 		");
+	if (allocation[i] != -1)
+	System.out.print(allocation[i] + 1);
+	else
+	System.out.print("Not Allocated");
+	System.out.println();
+	}
+	}
+
+	// Driver Code
+	public static void main(String[] args)
+	{
+	Scanner input = new Scanner(System.in);
+	System.out.println("Enter  total no. of blocks: ");
+	int m = input.nextInt();
+
+	System.out.println("Enter  total no. of processes: ");
+	int n = input.nextInt();
+
+	int blockSize[] = new int[m];
+	int processSize[] = new int[n];
+
+	for(int i=0; i<m; i++) {
+	System.out.println("Enter block size for block " +(i+1)+": ");
+	blockSize[i]=input.nextInt();
+	}
+
+	for(int i=0; i<n; i++) {
+	System.out.println("Enter process size for process " +(i+1)+": ");
+	processSize[i]=input.nextInt();
+	}
+
+
+
+	BestFit(blockSize, m, processSize, n);
+	}
+
+}
+
+
+
+First Fit:
+
+
+package SPOSpkg;
+import java.util.*;
+
+public class FirstFit {
+
+	public static void FirstFit(int blockSize[], int m,
+			int processSize[], int n)
+			{
+			// Stores block id of the
+			// block allocated to a process
+			int allocation[] = new int[n];
+
+			// Initially no block is assigned to any process
+			for (int i = 0; i < allocation.length; i++)
+			allocation[i] = -1;
+
+			// pick each process and find suitable blocks
+			// according to its size ad assign to it
+			for (int i = 0; i < n; i++)
+			{
+			for (int j = 0; j < m; j++)
+			{
+			if (blockSize[j] >= processSize[i])
+			{
+			// allocate block j to p[i] process
+			allocation[i] = j;
+
+			// Reduce available memory in this block.
+			//blockSize[j] -= processSize[i];
+			blockSize[j] = 0;
+
+			break;
+			}
+			}
+			}
+
+			System.out.println("Process No. Process Size   Block no.");
+			for (int i = 0; i < n; i++)
+			{
+			System.out.print(" " + (i+1) + " 		" +processSize[i] + " 		");
+			if (allocation[i] != -1)
+			System.out.print(allocation[i] + 1);
+			else
+			System.out.print("Not Allocated");
+			System.out.println();
+			}
+			}
+
+			// Driver Code
+			public static void main(String[] args)
+			{
+			Scanner input = new Scanner(System.in);
+			System.out.println("Enter  total no. of blocks: ");
+			int m = input.nextInt();
+
+			System.out.println("Enter  total no. of processes: ");
+			int n = input.nextInt();
+
+			int blockSize[] = new int[m];
+			int processSize[] = new int[n];
+
+			for(int i=0; i<m; i++) {
+			System.out.println("Enter block size for block " +(i+1)+": ");
+			blockSize[i]=input.nextInt();
+			}
+
+			for(int i=0; i<n; i++) {
+			System.out.println("Enter process size for process " +(i+1)+": ");
+			processSize[i]=input.nextInt();
+			}
+
+
+
+			FirstFit(blockSize, m, processSize, n);
+			}
+
+
+}
+
+
+11)	Write a program to simulate Memory placement strategies – next fit, worst fit. 
+
+
+
+Worst Fit:
+
+
+package SPOSpkg;
+import java.util.*;
+
+public class WorstFit {
+
+	// Method to allocate memory to
+	// blocks as per Worst fit algorithm
+	public static void WorstFit(int blockSize[], int m,
+	int processSize[], int n)
+	{
+	// Stores block id of the
+	// block allocated to a process
+	int allocation[] = new int[n];
+
+	// Initially no block is assigned to any process
+	for (int i = 0; i < allocation.length; i++)
+	allocation[i] = -1;
+
+	// pick each process and find suitable blocks
+	// according to its size ad assign to it
+	for (int i = 0; i < n; i++)
+	{ 	int diff=-1;
+	int pos=-1;
+	for (int j = 0; j < m; j++)
+	{
+	if (blockSize[j] >= processSize[i])
+	{
+	int calDiff= blockSize[j]- processSize[i];
+
+	if(calDiff > diff) {
+	diff= calDiff;
+	pos=j;
+	}
+	}
+	}
+	// allocate block j to p[i] process
+	allocation[i] = pos;
+
+	// Reduce available memory in this block.
+	//blockSize[pos] -= processSize[i];
+	if(pos!=-1) {
+	blockSize[pos] = 0;}
+	}
+
+	System.out.println("Process No. Process Size	Block no.");
+	for (int i = 0; i < n; i++)
+	{
+	System.out.print(" " + (i+1) + " " +
+	processSize[i] + " ");
+	if (allocation[i] != -1)
+	System.out.print(allocation[i] + 1);
+	else
+	System.out.print("Not Allocated");
+	System.out.println();
+	}
+	}
+
+	// Driver Code
+	public static void main(String[] args)
+	{
+	Scanner input = new Scanner(System.in);
+	System.out.println("Enter  total no. of blocks: ");
+	int m = input.nextInt();
+
+	System.out.println("Enter  total no. of processes: ");
+	int n = input.nextInt();
+
+	int blockSize[] = new int[m];
+	int processSize[] = new int[n];
+
+	for(int i=0; i<m; i++) {
+	System.out.println("Enter block size for block " +(i+1)+": ");
+	blockSize[i]=input.nextInt();
+	}
+
+	for(int i=0; i<n; i++) {
+	System.out.println("Enter process size for process " +(i+1)+": ");
+	processSize[i]=input.nextInt();
+	}
+
+
+
+	WorstFit(blockSize, m, processSize, n);
+	}
+
+
+}
+
+
+Next Fit: 
+
+
+
+package SPOSpkg;
+import java.util.*;
+
+public class NextFit {
+
+	// Method to allocate memory to
+	// blocks as per First fit algorithm
+	public static void NextFit(int blockSize[], int m,
+	int processSize[], int n)
+	{
+	// Stores block id of the
+	// block allocated to a process
+	int allocation[] = new int[n];
+
+	// Initially no block is assigned to any process
+	for (int i = 0; i < allocation.length; i++)
+	allocation[i] = -1;
+
+	// pick each process and find suitable blocks
+	// according to its size ad assign to it
+	int j=0;
+	for (int i = 0; i < n; i++) {
+
+	// Do not start from beginning
+	while (j < m) {
+
+	if (blockSize[j] >= processSize[i]) {
+
+	// allocate block j to p[i] process
+	allocation[i] = j;
+
+	// Reduce available memory in this block.
+	blockSize[j] = 0;
+
+	break;
+	}
+
+	// mod m will help in traversing the blocks from
+	// starting block after we reach the end.
+	j = (j + 1) % m;
+	}
+	}
+
+	System.out.println("Process No. Process Size	Block no.");
+	for (int i = 0; i < n; i++)
+	{
+	System.out.print(" " + (i+1) + " " +
+	processSize[i] + " ");
+	if (allocation[i] != -1)
+	System.out.print(allocation[i] + 1);
+	else
+	System.out.print("Not Allocated");
+	System.out.println();
+	}
+	}
+
+	// Driver Code
+	public static void main(String[] args)
+	{
+	Scanner input = new Scanner(System.in);
+	System.out.println("Enter  total no. of blocks: ");
+	int m = input.nextInt();
+
+	System.out.println("Enter  total no. of processes: ");
+	int n = input.nextInt();
+
+	int blockSize[] = new int[m];
+	int processSize[] = new int[n];
+
+	for(int i=0; i<m; i++) {
+	System.out.println("Enter block size for block " +(i+1)+": ");
+	blockSize[i]=input.nextInt();
+	}
+
+	for(int i=0; i<n; i++) {
+	System.out.println("Enter process size for process " +(i+1)+": ");
+	processSize[i]=input.nextInt();
+	}
+
+
+
+	NextFit(blockSize, m, processSize, n);
+	}
+}
+
+
+
+12)	"Write a program to simulate Page replacement algorithm. 
+	1. FIFO 2. LRU
+
+	Input reference String :- 2 3 2 1 5 2 4 5 3 2 5 2  
+	No. of frames are:- 3
+	"
+
+
+FIFO:
+
+
+package SPOSpkg;
+
+import java.io.*;
+import java.util.*;
+public class FIFO {
+public static void main(String[] args) throws IOException
+    {
+        
+        Scanner sc = new Scanner(System.in);
+        int frames,reference_length, pointer = 0, pagehit = 0, pagefault = 0;
+        int buffer[];
+        int reference[];
+        int memory_layout[][];
+
+        System.out.println("Please enter the number of Frames: ");
+        frames = sc.nextInt();
+
+        System.out.println("Please enter the length of the Reference string: ");
+        reference_length = sc.nextInt();
+
+        reference = new int[reference_length];
+        memory_layout = new int[reference_length][frames];
+        buffer = new int[frames];
+        for(int j = 0; j < frames; j++) {
+            buffer[j] = -1;
+        }
+        System.out.println("Please enter the reference string: ");
+        for(int i = 0; i < reference_length; i++)
+        {
+            reference[i] = sc.nextInt();
+        }
+        System.out.println();
+        
+        for(int i = 0; i < reference_length; i++)
+        {
+         int search = -1;
+         for(int j = 0; j < frames; j++)
+         {
+          if(buffer[j] == reference[i])
+          {
+           search = j;
+           pagehit++;
+           break;
+          }
+         }
+         if(search == -1)
+         {
+          buffer[pointer] = reference[i];
+          pagefault++;
+          pointer++;
+          if(pointer == frames)
+           pointer = 0;
+         }
+         for(int j = 0; j < frames; j++)
+             memory_layout[i][j] = buffer[j];
+        }
+
+        for(int i = 0; i < frames; i++)
+        {
+        	
+            for(int j = 0; j < reference_length; j++)
+                System.out.printf("%3d ",memory_layout[j][i]);
+            System.out.println();
+        }
+        System.out.println("The number of Faults: " + pagefault);
+        System.out.println("The number of Hits: " + pagehit);
+        System.out.println("Hit Ratio: " + (float)((float)pagehit/reference_length));}
+
+}
+
+
+
+
+LRU:
+
+
+
+
+13)	"Write a program to simulate Page replacement algorithm. 
+	1. FIFO 2. OPTIMAL
+
+	Input reference String :- 2 3 2 1 5 2 4 5 3 2 5 2  
+	No. of frames are:- 3
+	"
+
+FIFO:
+
+
+package SPOSpkg;
+
+import java.io.*;
+import java.util.*;
+public class FIFO {
+public static void main(String[] args) throws IOException
+    {
+        
+        Scanner sc = new Scanner(System.in);
+        int frames,reference_length, pointer = 0, pagehit = 0, pagefault = 0;
+        int buffer[];
+        int reference[];
+        int memory_layout[][];
+
+        System.out.println("Please enter the number of Frames: ");
+        frames = sc.nextInt();
+
+        System.out.println("Please enter the length of the Reference string: ");
+        reference_length = sc.nextInt();
+
+        reference = new int[reference_length];
+        memory_layout = new int[reference_length][frames];
+        buffer = new int[frames];
+        for(int j = 0; j < frames; j++) {
+            buffer[j] = -1;
+        }
+        System.out.println("Please enter the reference string: ");
+        for(int i = 0; i < reference_length; i++)
+        {
+            reference[i] = sc.nextInt();
+        }
+        System.out.println();
+        
+        for(int i = 0; i < reference_length; i++)
+        {
+         int search = -1;
+         for(int j = 0; j < frames; j++)
+         {
+          if(buffer[j] == reference[i])
+          {
+           search = j;
+           pagehit++;
+           break;
+          }
+         }
+         if(search == -1)
+         {
+          buffer[pointer] = reference[i];
+          pagefault++;
+          pointer++;
+          if(pointer == frames)
+           pointer = 0;
+         }
+         for(int j = 0; j < frames; j++)
+             memory_layout[i][j] = buffer[j];
+        }
+
+        for(int i = 0; i < frames; i++)
+        {
+        	
+            for(int j = 0; j < reference_length; j++)
+                System.out.printf("%3d ",memory_layout[j][i]);
+            System.out.println();
+        }
+        System.out.println("The number of Faults: " + pagefault);
+        System.out.println("The number of Hits: " + pagehit);
+        System.out.println("Hit Ratio: " + (float)((float)pagehit/reference_length));}
+
+}
+
+
+Optimal:
+
+
+package SPOSpkg;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+class optimal
+{
+public static void main(String[] args) throws IOException, InterruptedException
+{
+BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+int frames, pointer = 0, hit = 0, fault = 0,ref_len;
+boolean isFull = false;
+int buffer[];
+int reference[];
+int mem_layout[][];
+System.out.println("Please enter the number of Frames: ");
+frames = Integer.parseInt(br.readLine());
+System.out.println("Please enter the length of the Reference string:");
+ref_len = Integer.parseInt(br.readLine());
+reference = new int[ref_len];
+mem_layout = new int[ref_len][frames];
+buffer = new int[frames];
+for(int j = 0; j < frames; j++)
+buffer[j] = -1;
+System.out.println("Please enter the reference string: ");
+for(int i = 0; i < ref_len; i++)
+{
+reference[i] = Integer.parseInt(br.readLine());
+}
+System.out.println();
+for(int i = 0; i < ref_len; i++)
+{
+int search = -1;
+for(int j = 0; j < frames; j++)
+{
+if(buffer[j] == reference[i])
+{
+search = j;
+hit++;
+break;
+}
+}
+if(search == -1)
+{
+if(isFull)
+{
+int index[] = new int[frames];
+boolean index_flag[] = new boolean[frames];
+for(int j = i + 1; j < ref_len; j++)
+{
+for(int k = 0; k < frames; k++)
+{
+if((reference[j] == buffer[k]) && (index_flag[k] == false))
+{
+index[k] = j;
+index_flag[k] = true;
+break;
+}
+}
+}
+int max = index[0];
+pointer = 0;
+if(max == 0)
+max = 200;
+for(int j = 0; j < frames; j++)
+{
+if(index[j] == 0)
+index[j] = 200;
+if(index[j] > max)
+{
+max = index[j];
+pointer = j;
+}
+}
+}
+buffer[pointer] = reference[i];
+fault++;
+if(!isFull)
+{
+pointer++;
+if(pointer == frames)
+{
+pointer = 0;
+isFull = true;
+}
+}
+}
+for(int j = 0; j < frames; j++)
+mem_layout[i][j] = buffer[j];
+}
+
+System.out.println("The number of Hits: " + hit);
+System.out.println("Hit Ratio: " + (float)((float)hit/ref_len));
+System.out.println("The number of Faults: " + fault);
+}
+}
+	
+
+
+
+14)	Write a program to implement Deadlock Avoidance Algorithm
+
+
+package SPOSpkg;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Scanner;
+public class deadlock
+{
+	public static void main(String args[])
+	{
+		Scanner sc=new Scanner(System.in);
+		System.out.println("Enter no. of processes: ");
+		int m=sc.nextInt();
+		System.out.println("Enter no. of resources: ");
+		int n=sc.nextInt();
+		int [][]max=new int[m][n];
+		int [][]allocation=new int[m][n];
+		int [][]need=new int[m][n];
+		int [][]new_available=new int[1][n];
+		int f[]=new int[m];
+		Queue<String>  safe = new LinkedList<>();
+		
+		for(int i=0;i<m;i++)
+		{
+			f[i]=0;
+		}
+		for(int i=0;i<m;i++)
+		{
+			System.out.println("Enter no. of max resources required for process"+(i+1)+" : ");
+			for(int j=0;j<n;j++)
+			{
+				System.out.print("\t");
+				System.out.print(" R"+(j+1)+" : ");
+				max[i][j]=sc.nextInt();
+			}
+		}
+		
+		for(int i=0;i<m;i++)
+		{
+			System.out.println("Enter no. of resources allocated for process "+(i+1)+":");
+			for(int j=0;j<n;j++)
+			{
+				System.out.print("\t");
+				System.out.print(" R"+(j+1)+" : ");
+				allocation[i][j]=sc.nextInt();
+			}
+		}
+		
+		for(int i=0;i<1;i++)
+		{
+			System.out.println("Enter no. of resources available :");
+			for(int j=0;j<n;j++)
+			{
+				System.out.print("\t");
+				System.out.print(" R"+(j+1)+" : ");
+				new_available[i][j]=sc.nextInt();
+			}
+		}
+		
+		for(int i=0;i<m;i++)
+		{
+			for(int j=0;j<n;j++)
+			{
+				need[i][j]=max[i][j]-allocation[i][j];
+			}
+		}
+		
+		System.out.println("Need Matrix:");
+		for(int i=0;i<n;i++)
+		{
+			System.out.print("\tR"+(i+1));
+		}
+		System.out.println();
+		for(int i=0;i<m;i++)
+		{
+			System.out.print("P"+(i+1));
+			for(int j=0;j<n;j++)
+			{
+				System.out.print("\t"+need[i][j]);
+			}
+			System.out.println();
+		}
+		System.out.println();
+		
+		while(true)
+		{
+			for(int i=0;i<m;i++)
+			{
+				int flag=0;
+				for(int j=0;j<n;j++)
+				{
+					flag=0;
+					if(f[i]==0 && need[i][j]<=new_available[0][j])
+					{
+						flag=1;
+					}
+					else
+					{
+						flag=0;
+						break;
+					}
+				}
+					
+				if(flag==1)
+				{
+					safe.add("P"+(i+1));
+					System.out.println("P"+(i+1)+" is executed");
+					System.out.println("New available after execution of P"+(i+1)+" is:");
+					for(int j=0;j<n;j++)
+					{
+						{
+							new_available[0][j]=new_available[0][j]+allocation[i][j];
+							f[i]=1;
+							System.out.print("\t"+new_available[0][j]);
+						}
+					}
+					System.out.println();
+				}	
+			}
+			
+			int flag_f=0;
+			for(int k=0;k<m;k++) 
+			{
+				flag_f=0;
+				if(f[k]==1)
+				{
+					flag_f=1;
+				}
+				else
+					break;
+						
+			}
+			
+			if(flag_f==1)
+				break;
+		}
+		System.out.println("The safe sequence is : "+safe);
+		sc.close();	
+	}
+}
+
+
+15)	Pass 1
+
+
+--------------------------------------------Obj.java----------------------------------------------------------------------------------------
+
+
+public class obj {
+String name;
+int addr;
+obj(String nm, int address)
+{
+this.name=nm;
+this.addr=address;
+}
+}
+
+
+--------------------------------------------Pooltable.java--------------------------------------------------------------------------------
+
+
+public class pooltable {
+int first,total_literals;
+public pooltable(int f, int l) {
+// TODO Auto-generated constructor stub
+this.first=f;
+this.total_literals=l;
+}
+}
+
+---------------------------------------------Pass1.java----------------------------------------------------------------------------------
+
+
+import java.io.*;
+class pass1 
+{
+public static void main(String args[]) throws NullPointerException, FileNotFoundException
+{
+String REG[] = {"ax","bx","cx","dx"};
+String IS[]={"stop","add","sub","mult","mover","movem","comp","bc","div","read"};
+String DL[]={"ds","dc"};
+obj[] literal_table = new obj[10];
+obj[] symb_table = new obj[10];
+obj[] optab =new obj[60];
+pooltable[] pooltab=new pooltable[5];
+String line; 
+try{
+BufferedReader br=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\Pass1\\src\\input.txt"));
+BufferedWriter bw=new BufferedWriter(new FileWriter("C:\\Users\\Admin\\eclipse-workspace\\Pass1\\src\\output.txt"));
+Boolean start=false;
+Boolean end=false,fill_addr=false,ltorg=false;
+int total_symb=0,total_ltr=0,optab_cnt=0,pooltab_cnt=0,loc=0,temp,pos;
+while((line=br.readLine())!=null&&!end)
+ {
+ String tokens[]=line.split(" ",4);
+ if(loc!=0 && !ltorg)
+ {
+ bw.write("\n"+String.valueOf(loc));
+ ltorg=false;
+ loc++;
+ }
+ ltorg=fill_addr=false;
+ for(int k=0;k<tokens.length;k++)
+ {
+ pos = -1;
+ if(start==true)
+ {
+ loc=Integer.parseInt(tokens[k]);
+ start=false;
+ }
+ 
+ switch(tokens[k])
+{
+ case "start" : start = true;
+ pos = 1;
+ bw.write("\t(AD,"+pos+")");
+ break;
+ case "end": end=true;
+ pos = 2;
+ bw.write("\t(AD,"+pos+")\n");
+ for(temp=0;temp<total_ltr;temp++)
+ if(literal_table[temp].addr==0)
+ { literal_table[temp].addr=loc-1;
+ bw.write("\t(DL,1)\t(C,"+literal_table[temp].name+")"+"\n"+loc++);
+ }
+ /* if(pooltab_cnt==0)
+ pooltab[pooltab_cnt++]=new pooltable(0,temp);
+ else
+ {
+ pooltab[pooltab_cnt]=new pooltable(pooltab[pooltab_cnt-1].first+pooltab[pooltab_cnt-1].total_literals,total_ltr-pooltab[pooltab_cnt-1].first-1);
+ pooltab_cnt++;
+ } */
+ break;
+ 
+ case "origin": pos = 3; 
+ bw.write("\t(AD,"+pos+")");
+ pos= search(tokens[++k],symb_table,total_symb);
+ k++;
+ bw.write("\t(C,"+(symb_table[pos].addr)+")");
+ loc = symb_table[pos].addr;
+ break;
+ 
+ case "ltorg": ltorg=true;
+ pos = 5;
+ for(temp=0;temp<total_ltr;temp++)
+ if(literal_table[temp].addr==0)
+ {
+ literal_table[temp].addr=loc-1;
+ bw.write("\t(DL,1)\t(C,"+literal_table[temp].name+")"+"\n"+loc++);
+ }
+ if(pooltab_cnt==0)
+ pooltab[pooltab_cnt++]=new pooltable(0,temp);
+ else
+ {
+ pooltab[pooltab_cnt]=new pooltable(pooltab[pooltab_cnt-1].first+pooltab[pooltab_cnt-1].total_literals,total_ltr-pooltab[pooltab_cnt-1].first-1);
+ pooltab_cnt++;
+ } 
+ break;
+ 
+ case "equ": pos = 4; 
+ bw.write("\t(AD,"+pos+")");
+ String prev_token=tokens[k-1];
+ int pos1 = search(prev_token,symb_table,total_symb);
+ pos = search(tokens[++k],symb_table,total_symb);
+ symb_table[pos1].addr = symb_table[pos].addr;
+ bw.write("\t(S,"+(pos+1)+")");
+ break;
+ 
+}
+ if(pos == -1)
+ {
+ pos=search(tokens[k], IS);
+ if(pos != -1)
+ {
+ bw.write("\t(IS,"+(pos+1)+")");
+ optab[optab_cnt++]=new obj(tokens[k], pos);
+ }
+ else
+ {
+ pos=search(tokens[k], DL);
+ if(pos != -1)
+ {
+ bw.write("\t(DL,"+(pos+1)+")");
+ optab[optab_cnt++]=new obj(tokens[k], pos);
+ fill_addr=true;
+ }
+ else if(tokens[k].matches("[a-zA-Z]+:"))
+ {
+ pos = search(tokens[k], symb_table,total_symb);
+ if(pos == -1)
+ {
+ symb_table[total_symb++]=new obj(tokens[k].substring(0,tokens[k].length()-1),loc-1);
+ bw.write("\t(S,"+total_symb+")");
+ pos=total_symb;
+ }
+ }
+ }
+ }
+ if(pos == -1) 
+ {
+ pos=search(tokens[k], REG);
+ if(pos!=-1)
+ bw.write("\t(RG,"+(pos+1)+")");
+ else
+ {
+ if(tokens[k].matches("='\\d+'"))
+ {
+ String s=tokens[k].substring(2, 3);
+ 
+ literal_table[total_ltr++]=new obj(s, 0);
+ bw.write("\t(L,"+total_ltr+")");
+ }
+ else if(tokens[k].matches("\\d+")||tokens[k].matches("\\d+H") || tokens[k].matches("\\d+h") || 
+tokens[k].matches("\\d+D") || tokens[k].matches("\\d+d"))
+ bw.write("\t(C,"+tokens[k]+")");
+ else
+ {
+ pos = search(tokens[k], symb_table,total_symb);
+ if(fill_addr && pos!=-1)
+{
+symb_table[pos].addr=loc-1;
+fill_addr=false;
+}
+ else if(pos==-1)
+ {
+ symb_table[total_symb++]=new obj(tokens[k],0);
+ bw.write("\t(S," + total_symb + ")");
+ }
+ else
+ bw.write("\t(S," + pos + ")");
+ }
+ }
+ }
+ }
+ }
+ System.out.println("\n******************SYMBOL TABLE*********************");
+ System.out.println("\nSYMBOL\tADDRESS");
+ for(int i=0;i<total_symb;i++)
+ System.out.println(symb_table[i].name+"\t"+symb_table[i].addr);
+ 
+ pooltab[pooltab_cnt]=new pooltable(pooltab[pooltab_cnt-1].first+pooltab[pooltab_cnt-1].total_literals,total_ltr-pooltab[pooltab_cnt-1].first-2);
+pooltab_cnt++;
+ System.out.println("\n****************POOL TABLE*******************");
+ System.out.println("\nPOOL\tTOTAL LITERALS");
+ 
+ for(int i=0;i<pooltab_cnt;i++)
+ System.out.println(pooltab[i].first+"\t"+pooltab[i].total_literals);
+ 
+ System.out.println("\n**************LITERAL TABLE***************");
+ System.out.println("\nIndex\tLITERAL\tADDRESS");
+ for(int i=0;i<total_ltr;i++)
+ {
+ if(literal_table[i].addr==0)
+ literal_table[i].addr=loc++;
+ System.out.println((i) +"\t"+literal_table[i].name+"\t"+literal_table[i].addr);
+ }
+ 
+ System.out.println("\n***************OPTABLE*********************");
+ System.out.println("\nMNEMONIC\tOPCODE");
+ for(int i=0;i<IS.length;i++)
+ System.out.println(IS[i]+"\t\t"+i);
+ 
+ br.close();
+ bw.close();
+}
+catch(Exception e)
+{
+ System.out.println("error while reading the file");
+ e.printStackTrace();
+}
+BufferedReader br=new BufferedReader(new FileReader("C:\\\\Users\\\\Admin\\\\eclipse-workspace\\\\Pass1\\\\src\\\\output.txt"));
+System.out.println("\n*********Output1.txt****************\n");
+try {
+while((line=br.readLine())!=null)
+System.out.println(line);
+br.close();
+} catch (IOException e) {
+// TODO Auto-generated catch block
+e.printStackTrace();
+}
+} 
+public static int search(String token, String[] list) {
+for(int i=0;i<list.length;i++)
+if(token.equalsIgnoreCase(list[i]))
+return i;
+return -1;
+}
+public static int search(String token, obj[] list,int cnt) {
+for(int i=0;i<cnt;i++)
+if(token.equalsIgnoreCase(list[i].name))
+return i;
+return -1;
+}
+} 
+
+--------------------------------------------------------input.txt------------------------------------------------------------------
+
+start 100
+mover ax 05
+mover bx 10
+up: add ax bx
+movem a ='5'
+mult ax a
+origin up
+ltorg
+movem b ='8'
+movem c ='8'
+ltorg
+movem b ='7'
+movem c ='8'
+ds a 02
+dc b 10
+ds c 09
+next equ up
+end
+
+--------------------------------------------------------output.txt--------------------------------------------------------------
+
+	(AD,1)	(C,100)
+100	(IS,5)	(RG,1)	(C,05)
+101	(IS,5)	(RG,2)	(C,10)
+102	(S,1)	(IS,2)	(RG,1)	(RG,2)
+103	(IS,6)	(S,2)	(L,1)
+104	(IS,4)	(RG,1)	(S,1)
+105	(AD,3)	(C,102)
+102	(DL,1)	(C,5)
+103	(IS,6)	(S,3)	(L,2)
+104	(IS,6)	(S,4)	(L,3)
+105	(DL,1)	(C,8)
+106	(DL,1)	(C,8)
+107	(IS,6)	(S,2)	(L,4)
+108	(IS,6)	(S,3)	(L,5)
+109	(DL,1)	(C,02)
+110	(DL,2)	(C,10)
+111	(DL,1)	(C,09)
+112	(S,5)	(AD,4)	(S,1)
+113	(AD,2)
+	(DL,1)	(C,7)
+114	(DL,1)	(C,8)
+115
+
+
+
+16)	Pass 2
+
+
+
+--------------------------------------------------------obj.java-------------------------------------------------------------------------
+
+
+public class obj {
+String name;
+int addr;
+obj(String nm, int address)
+{
+this.name=nm;
+this.addr=address;
+}
+}
+
+--------------------------------------------------pass2.java--------------------------------------------------------------------------
+
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Scanner;
+public class pass2 {
+static obj[] symb_table=new obj[10];
+static obj[] literal_table=new obj[10];
+static int symb_found=0;
+public static void main(String[] args) throws IOException {
+// TODO Auto-generated method stub
+Scanner sc = new Scanner(System.in);
+System.out.println("ENTER TOTAL NUMBER OF SYMBOLS : ");
+int total_symb = sc.nextInt();
+int pos,num;
+for(int i=0 ; i<total_symb; i++)
+{
+symb_table[i]=new obj("",0);
+System.out.println("ENTER SYMBOL NAME : ");
+symb_table[i].name=sc.next();
+System.out.println("ENTER SYMBOL ADDRESS : ");
+symb_table[i].addr=sc.nextInt();
+}
+System.out.println("ENTER TOTAL NUMBER OF LITRALS : ");
+int total_ltr = sc.nextInt();
+for(int i=0 ; i<total_ltr; i++)
+{
+literal_table[i]=new obj("",0);
+System.out.println("ENTER LITERAL NAME : ");
+literal_table[i].name=sc.next();
+System.out.println("ENTER LITERAL ADDRESS : ");
+literal_table[i].addr=sc.nextInt();
+}
+System.out.println("\n********************SYMBOL TABLE************************");
+System.out.println("\nSYMBOL\tADDRESS");
+for(int i=0;i<total_symb;i++)
+System.out.println(symb_table[i].name+"\t"+symb_table[i].addr);
+System.out.println("\n**************************LITERAL TABLE********************");
+ System.out.println("\nIndex\tLITERAL\tADDRESS");
+ for(int i=0;i<total_ltr;i++)
+ System.out.println((i+1) +"\t"+literal_table[i].name+"\t"+literal_table[i].addr);
+ 
+BufferedReader br2=new BufferedReader(new FileReader("C:\\Users\\Admin\\eclipse-workspace\\Pass2\\src\\outout.txt"));
+String line;
+boolean symbol_error=false,undef_mnemonic=false;
+System.out.println("\n****************OUTPUT FILE**************\n\n");
+lab: while((line = br2.readLine())!=null)
+{
+String[] token_list=line.split("\\s+",5);
+symbol_error=undef_mnemonic=false;
+for(String token:token_list)
+{
+if(token.length()>0)
+{
+pos = -1;
+if(token.matches("---"))
+{
+System.out.print("\t---");
+undef_mnemonic=true;
+}
+else if(token.matches("[0-9]+"))
+System.out.print("\n\n"+token);
+else
+{
+String letters = token.replaceAll("[^A-Za-z]+", "");
+num = Integer.parseInt(token.replaceAll("[^0-9]+", ""));
+if(token.matches("\\([0-9]+\\)"))
+System.out.print("\t"+num);
+else
+{
+switch (letters.toUpperCase()) {
+case "S" : if(symb_table[num-1].addr==0)
+{
+System.out.print("\t---");
+symbol_error=true;
+}
+else
+System.out.print("\t"+symb_table[num-1].addr);
+break;
+case "L" : System.out.print("\t"+literal_table[num-1].addr);
+break;
+case "AD" : System.out.print("\n");
+continue lab;
+case "DL" : 
+switch (num){
+case 1: System.out.print("\n");
+ break;
+case 2: System.out.print("\t 00 \t 00");
+} continue lab;
+case "C" : System.out.print("\t"+num);
+break;
+default: System.out.print("\t"+"00"+num);
+}
+}
+}
+}
+}
+if(symbol_error)
+System.out.print("\n\n****************SYMBOL IS NOT DEFINED**************");
+if(undef_mnemonic)
+System.out.print("\n\n***************INVALID MNEMONIC *************");
+}
+int[] flag=new int[total_symb];
+for(int i=0;i<total_symb;i++)
+{
+symb_found=0;
+for(int j=0;j<total_symb;j++)
+if(symb_table[i].name.equalsIgnoreCase(symb_table[j].name) && flag[j]==0)
+{
+symb_found++;
+flag[i]=flag[j]=1;
+}
+if(symb_found>1)
+System.out.print("\n\n*************** '"+symb_table[i].name+"' IS DUPLICATE SYMBOL********");
+}
+}
+}
+
+-----------------------------------------Pooltable.java------------------------------------------------------------------------
+
+
+public class pooltable {
+int first,total_literals;
+public pooltable(int f, int l) {
+// TODO Auto-generated constructor stub
+this.first=f;
+this.total_literals=l;
+}
+}
+
+------------------------------------------output.txt--------------------------------------------------------------------
+
+	(AD,1)	(C,100)
+100	(IS,5)	(RG,1)	(C,05)
+101	(IS,5)	(RG,2)	(C,10)
+102	(S,1)	(IS,2)	(RG,1)	(RG,2)
+103	(IS,6)	(S,2)	(L,1)
+104	(IS,4)	(RG,1)	(S,1)
+105	(AD,3)	(C,102)
+102	(DL,1)	(C,5)
+103	(IS,6)	(S,3)	(L,2)
+104	(IS,6)	(S,4)	(L,3)
+105	(DL,1)	(C,8)
+106	(DL,1)	(C,8)
+107	(IS,6)	(S,2)	(L,4)
+108	(IS,6)	(S,3)	(L,5)
+109	(DL,1)	(C,02)
+110	(DL,2)	(C,10)
+111	(DL,1)	(C,09)
+112	(S,5)	(AD,4)	(S,1)
+113	(AD,2)
+	(DL,1)	(C,7)
+114	(DL,1)	(C,8)
+115
+
+
+
+Inputs:
+
+5
+up
+102
+a
+109
+b
+110
+c
+111
+next
+102
+5
+5
+102
+8
+105
+8
+106
+7
+113
+8
+114
+
+
+
