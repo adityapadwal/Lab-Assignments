@@ -69,3 +69,7 @@ int main()
     dfs(start_node);
     return 0;
 }
+
+// Compiling & Running program:
+//  g++ -fopenmp program.cpp -o program 
+// ./program

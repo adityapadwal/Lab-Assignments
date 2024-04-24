@@ -147,3 +147,7 @@ Sequential Bubble sort: 16878ms
 Parallel (16) Bubble sort: 2914ms
 
 */
+
+// Compiling & Running program:
+//  g++ -fopenmp program.cpp -o program 
+// ./program

@@ -125,3 +125,7 @@ int main() {
     bfs(root);
     return 0;
 }
+
+// Compiling & Running program:
+//  g++ -fopenmp program.cpp -o program 
+// ./program

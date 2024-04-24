@@ -181,3 +181,7 @@ Sequential Merge sort: 165ms
 Parallel (16) Merge sort: 42ms
 
 */
+
+// Compiling & Running program:
+//  g++ -fopenmp program.cpp -o program 
+// ./program
